@@ -1,3 +1,4 @@
+import { fade } from 'svelte/transition';
 <script lang="ts">
 	import { fadeIn } from 'svelte/transition';
 	import { Smartphone, Wrench, Clock, Star, Shield, Truck } from 'lucide-svelte';
