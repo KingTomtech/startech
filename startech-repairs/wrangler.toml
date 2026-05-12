@@ -1,4 +1,7 @@
-# wrangler.toml
 name = "startech-repairs"
-pages_build_output_dir = ".svelte-kit/output"
+main = ".svelte-kit/output/server/index.js"
 compatibility_date = "2026-05-12"
+compatibility_flags = ["nodejs_compat"]
+
+[site]
+bucket = ".svelte-kit/output/client"
