@@ -87,10 +87,10 @@
 
 			if (records.items.length > 0) {
 				repairData = records.items[0];
-				
+
 				unsubscribe = await pb.collection(repairData.collectionName).subscribe(repairData.id, (e) => {
 					repairData = e.record;
-				});
+				}).catch(() => undefined);
 			} else {
 				error = 'No repair found with that booking ID';
 				addNotification('error', 'Repair not found. Please check your booking ID.');

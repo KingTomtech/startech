@@ -108,6 +108,7 @@
 								<div class="rounded-lg bg-light p-3 text-sm">
 									<p class="font-medium text-primary">{invoice.invoice_number || invoice.id}</p>
 									<p class="text-muted">{formatCurrency(invoice.total || 0)} · {invoice.status}</p>
+									<a class="mt-2 inline-block font-medium text-accent hover:underline" href={`/customer/invoices/${invoice.id}`}>View invoice</a>
 								</div>
 							{:else}
 								<p class="text-sm text-muted">No invoices yet.</p>

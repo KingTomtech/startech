@@ -14,13 +14,18 @@
 	let repairs: any[] = [];
 	let inventory: any[] = [];
 	let devices: any[] = [];
-	let activeTab: 'repairs' | 'prices' | 'devices' = 'repairs';
+	let invoices: any[] = [];
+	let activeTab: 'repairs' | 'invoices' | 'prices' | 'devices' = 'repairs';
 	let loading = true;
 
 	let selectedRepair = '';
 	let status = 'Diagnosing';
 	let notes = '';
 	let message = '';
+	let invoiceRepair = '';
+	let invoiceSubtotal = '';
+	let invoiceTax = '';
+	let invoiceStatus = 'Pending';
 
 	let priceName = '';
 	let priceSku = '';
@@ -36,16 +41,21 @@
 			await goto('/login');
 			return;
 		}
+		if (pb.authStore.record?.role === 'admin') {
+			await goto('/admin/dashboard');
+			return;
+		}
 
 		await loadData();
 	});
 
 	async function loadData() {
 		loading = true;
-		[repairs, inventory, devices] = await Promise.all([
+		[repairs, inventory, devices, invoices] = await Promise.all([
 			pb.collection('repairs').getFullList({ sort: '-created', expand: 'customer,technician,device' }),
 			pb.collection('inventory_parts').getFullList({ sort: 'name' }),
-			pb.collection('devices').getFullList({ sort: 'brand,model' })
+			pb.collection('devices').getFullList({ sort: 'brand,model' }),
+			pb.collection('invoices').getFullList({ sort: '-created', expand: 'customer,repair' })
 		]);
 		loading = false;
 	}
@@ -87,6 +97,44 @@
 		addNotification('success', 'Repair updated. Notification record saved for email/SMS workflow.');
 		notes = '';
 		message = '';
+		await loadData();
+	}
+
+	async function createInvoice() {
+		const repair = repairs.find((item) => item.id === invoiceRepair);
+		if (!repair?.customer) {
+			addNotification('error', 'Select a repair with a customer before creating an invoice.');
+			return;
+		}
+
+		const subtotal = Number(invoiceSubtotal || 0);
+		const tax = Number(invoiceTax || 0);
+		const total = subtotal + tax;
+		await pb.collection('invoices').create({
+			repair: repair.id,
+			customer: repair.customer,
+			subtotal,
+			tax,
+			total,
+			status: invoiceStatus,
+			invoice_number: `INV-${Date.now().toString(36).toUpperCase()}`
+		});
+
+		await pb.collection('repairs').update(repair.id, { price: total }).catch(() => undefined);
+		invoiceRepair = '';
+		invoiceSubtotal = '';
+		invoiceTax = '';
+		invoiceStatus = 'Pending';
+		addNotification('success', 'Invoice created and saved to the customer account.');
+		await loadData();
+	}
+
+	async function updateInvoiceStatus(invoice: any, value: string) {
+		await pb.collection('invoices').update(invoice.id, {
+			status: value,
+			paid_at: value === 'Paid' ? new Date().toISOString() : null
+		});
+		addNotification('success', 'Invoice status updated');
 		await loadData();
 	}
 
@@ -152,7 +200,7 @@
 		</div>
 
 		<div class="mt-8 flex flex-wrap gap-3">
-			{#each [['repairs', 'Repairs'], ['prices', 'Prices'], ['devices', 'Devices']] as tab}
+			{#each [['repairs', 'Repairs'], ['invoices', 'Invoices'], ['prices', 'Prices'], ['devices', 'Devices']] as tab}
 				<button class="rounded-lg px-4 py-2 font-medium {activeTab === tab[0] ? 'bg-primary text-white' : 'bg-white text-primary'}" on:click={() => activeTab = tab[0] as any}>{tab[1]}</button>
 			{/each}
 		</div>
@@ -184,6 +232,44 @@
 								</div>
 								<p class="mt-3 whitespace-pre-line text-sm text-muted">{repair.notes}</p>
 							</article>
+						{/each}
+					</div>
+				</section>
+			</div>
+		{:else if activeTab === 'invoices'}
+			<div class="mt-8 grid gap-6 lg:grid-cols-[380px_1fr]">
+				<form class="rounded-lg border border-border bg-white p-5 space-y-4" on:submit|preventDefault={createInvoice}>
+					<h2 class="text-xl font-semibold text-primary">Create invoice</h2>
+					<Select label="Repair" bind:value={invoiceRepair} options={repairs.map((repair) => ({ value: repair.id, label: `${repair.booking_id || repair.id} - ${repair.issue_type}` }))} />
+					<Input label="Subtotal" bind:value={invoiceSubtotal} />
+					<Input label="Tax" bind:value={invoiceTax} />
+					<Select label="Status" bind:value={invoiceStatus} options={[
+						{ value: 'Pending', label: 'Pending' },
+						{ value: 'Paid', label: 'Paid' },
+						{ value: 'Overdue', label: 'Overdue' }
+					]} />
+					<Button type="submit">Create invoice</Button>
+				</form>
+
+				<section class="rounded-lg border border-border bg-white p-5">
+					<h2 class="text-xl font-semibold text-primary">Invoices</h2>
+					<div class="mt-5 space-y-3">
+						{#each invoices as invoice}
+							<div class="rounded-lg bg-light p-4">
+								<div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+									<div>
+										<p class="font-semibold text-primary">{invoice.invoice_number || invoice.id}</p>
+										<p class="text-sm text-muted">{formatCurrency(invoice.total || 0)} · {formatDate(invoice.created)}</p>
+									</div>
+									<select class="rounded border border-border px-3 py-2 text-sm" value={invoice.status} on:change={(event) => updateInvoiceStatus(invoice, (event.target as HTMLSelectElement).value)}>
+										<option>Pending</option>
+										<option>Paid</option>
+										<option>Overdue</option>
+									</select>
+								</div>
+							</div>
+						{:else}
+							<p class="text-sm text-muted">No invoices yet.</p>
 						{/each}
 					</div>
 				</section>
