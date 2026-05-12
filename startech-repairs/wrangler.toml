@@ -1,0 +1,4 @@
+# wrangler.toml
+name = "startech-repairs"
+pages_build_output_dir = ".svelte-kit/output"
+compatibility_date = "2026-05-12"
