@@ -245,7 +245,7 @@
 					<p class="text-sm text-muted text-center">
 						Have questions about your repair? 
 						<a href="tel:+61894567890" class="text-accent hover:underline font-medium">
-							Call us at (08) 9456 7890
+							Call us at +618 9456 7890
 						</a>
 					</p>
 				</div>
