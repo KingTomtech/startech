@@ -25,16 +25,21 @@ export function getPortalPath(record = pb.authStore.record) {
 
 export async function login(email: string, password: string) {
 	const collections: AuthCollection[] = ['customers', 'technicians'];
-	let lastError = 'Unable to log in';
+	const identity = email.trim().toLowerCase();
+	let lastError = 'We could not find an account with those login details.';
 
 	for (const collection of collections) {
 		try {
-			const authData = await pb.collection(collection).authWithPassword(email, password);
+			const authData = await pb.collection(collection).authWithPassword(identity, password, {
+				requestKey: `login-${collection}-${Date.now()}`
+			});
 			user.set(authData.record);
 			isAuthenticated.set(true);
 			return { success: true, record: authData.record, portal: getPortalPath(authData.record) };
 		} catch (error: any) {
-			lastError = error.message;
+			if (error?.status !== 400 && error?.status !== 404) {
+				lastError = error.message || lastError;
+			}
 		}
 	}
 
@@ -108,8 +113,9 @@ export function logout() {
 
 export async function registerCustomer(email: string, password: string, name: string, phone: string) {
 	try {
+		const identity = email.trim().toLowerCase();
 		const record = await pb.collection('customers').create({
-			email,
+			email: identity,
 			emailVisibility: true,
 			password,
 			passwordConfirm: password,
@@ -117,7 +123,7 @@ export async function registerCustomer(email: string, password: string, name: st
 			phone,
 			role: 'customer'
 		});
-		await login(email, password);
+		await login(identity, password);
 		return { success: true, record };
 	} catch (error: any) {
 		return { success: false, error: error.message };
@@ -132,8 +138,8 @@ export async function requestTechnicianAccess(
 ) {
 	try {
 		const record = await pb.collection('technician_requests').create({
-			name,
-			email,
+			name: name.trim(),
+			email: email.trim().toLowerCase(),
 			phone,
 			experience,
 			status: 'Pending'
