@@ -201,10 +201,10 @@
 				<Smartphone size={20} />
 			</a>
 			<a 
-				href="tel:+61894567890" 
+				href="tel:+61420994662" 
 				class="bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white/20 transition-colors inline-flex items-center justify-center"
 			>
-				Call Us: (08) 9456 7890
+				Call Us: +61 420 994 662
 			</a>
 		</div>
 	</div>

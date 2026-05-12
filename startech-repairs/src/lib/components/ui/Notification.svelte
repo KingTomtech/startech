@@ -28,7 +28,7 @@
 		<div
 			in:slide={{ duration: 200 }}
 			out:fade={{ duration: 200 }}
-			class="flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg min-w-[300px] ${colors[notification.type]}"
+			class={colors[notification.type] + ' flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg min-w-[300px] max-w-[calc(100vw-2rem)]'}
 		>
 			<svelte:component this={icons[notification.type]} size={20} />
 			<span class="text-sm font-medium">{notification.message}</span>

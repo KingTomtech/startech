@@ -1,17 +1,33 @@
 <script lang="ts">
+	import { onDestroy } from 'svelte';
+	import { page } from '$app/stores';
 	import { pb } from '$lib/pocketbase';
 	import { addNotification } from '$lib/stores';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
-	import { trackRepairSchema, type TrackRepairFormData } from '$lib/validators';
-	import { generateBookingId } from '$lib/utils';
+	import { trackRepairSchema } from '$lib/validators';
 
 	let bookingId = '';
 	let error = '';
 	let loading = false;
 	let repairData: any = null;
+	let unsubscribe: (() => void) | undefined;
+
+	$: if ($page.url.searchParams.get('booking') && !bookingId) {
+		bookingId = $page.url.searchParams.get('booking') || '';
+	}
 
 	const statusColors: Record<string, string> = {
+		Received: 'bg-gray-100 text-gray-800',
+		Diagnosing: 'bg-blue-100 text-blue-800',
+		'Awaiting Parts': 'bg-yellow-100 text-yellow-800',
+		Repairing: 'bg-purple-100 text-purple-800',
+		'Quality Testing': 'bg-indigo-100 text-indigo-800',
+		'Ready For Pickup': 'bg-green-100 text-green-800',
+		Completed: 'bg-success text-white',
+		'Awaiting Customer Response': 'bg-orange-100 text-orange-800',
+		Cancelled: 'bg-danger text-white',
+		Unrepairable: 'bg-red-100 text-red-800',
 		received: 'bg-gray-100 text-gray-800',
 		diagnosing: 'bg-blue-100 text-blue-800',
 		awaiting_parts: 'bg-yellow-100 text-yellow-800',
@@ -25,6 +41,16 @@
 	};
 
 	const statusLabels: Record<string, string> = {
+		Received: 'Received',
+		Diagnosing: 'Diagnosing',
+		'Awaiting Parts': 'Awaiting Parts',
+		Repairing: 'In Repair',
+		'Quality Testing': 'Quality Testing',
+		'Ready For Pickup': 'Ready for Pickup',
+		Completed: 'Completed',
+		'Awaiting Customer Response': 'Awaiting Your Response',
+		Cancelled: 'Cancelled',
+		Unrepairable: 'Unrepairable',
 		received: 'Received',
 		diagnosing: 'Diagnosing',
 		awaiting_parts: 'Awaiting Parts',
@@ -50,18 +76,21 @@
 		loading = true;
 
 		try {
-			// Try to fetch by booking ID
-			const records = await pb.collection('repairs').getList(1, 1, {
-				filter: `booking_id = "${bookingId}"`
-			});
+			if (unsubscribe) {
+				unsubscribe();
+				unsubscribe = undefined;
+			}
+
+			const normalizedBookingId = bookingId.trim().toUpperCase();
+			const filter = pb.filter('booking_id = {:bookingId}', { bookingId: normalizedBookingId });
+			let records = await pb.collection('repairs').getList(1, 1, { filter });
 
 			if (records.items.length > 0) {
 				repairData = records.items[0];
 				
-				// Subscribe to realtime updates
-				pb.collection('repairs').subscribe(bookingId, (e) => {
+				unsubscribe = await pb.collection(repairData.collectionName).subscribe(repairData.id, (e) => {
 					repairData = e.record;
-				}, { expand: 'device' });
+				});
 			} else {
 				error = 'No repair found with that booking ID';
 				addNotification('error', 'Repair not found. Please check your booking ID.');
@@ -81,6 +110,18 @@
 	function getStatusColor(status: string): string {
 		return statusColors[status] || 'bg-gray-100 text-gray-800';
 	}
+
+	function extractNoteValue(notes: string | undefined, label: string): string {
+		if (!notes) return '';
+		const line = notes.split('\n').find((item) => item.startsWith(`${label}:`));
+		return line?.replace(`${label}:`, '').trim() || '';
+	}
+
+	onDestroy(() => {
+		if (unsubscribe) {
+			unsubscribe();
+		}
+	});
 </script>
 
 <svelte:head>
@@ -147,12 +188,8 @@
 					<h3 class="font-semibold text-primary mb-4">Device Information</h3>
 					<div class="grid grid-cols-2 gap-4">
 						<div>
-							<p class="text-sm text-muted">Brand</p>
-							<p class="font-medium">{repairData.device_brand || 'N/A'}</p>
-						</div>
-						<div>
-							<p class="text-sm text-muted">Model</p>
-							<p class="font-medium">{repairData.device_model || 'N/A'}</p>
+							<p class="text-sm text-muted">Device</p>
+							<p class="font-medium">{extractNoteValue(repairData.notes, 'Device') || repairData.expand?.device?.model || 'N/A'}</p>
 						</div>
 						<div>
 							<p class="text-sm text-muted">Issue</p>
@@ -171,16 +208,16 @@
 					<div class="relative">
 						<div class="absolute left-4 top-0 bottom-0 w-0.5 bg-border"></div>
 						<div class="space-y-6">
-							{#each ['received', 'diagnosing', 'repairing', 'quality_testing', 'ready_for_pickup', 'completed'] as status}
+							{#each ['Received', 'Diagnosing', 'Repairing', 'Quality Testing', 'Ready For Pickup', 'Completed'] as status}
 								<div class="relative flex items-start gap-4">
 									<div class="relative z-10 w-8 h-8 rounded-full flex items-center justify-center {
-										['received', 'diagnosing', 'repairing', 'quality_testing', 'ready_for_pickup', 'completed'].indexOf(repairData.status) >= 
-										['received', 'diagnosing', 'repairing', 'quality_testing', 'ready_for_pickup', 'completed'].indexOf(status)
+										['Received', 'Diagnosing', 'Repairing', 'Quality Testing', 'Ready For Pickup', 'Completed'].indexOf(repairData.status) >= 
+										['Received', 'Diagnosing', 'Repairing', 'Quality Testing', 'Ready For Pickup', 'Completed'].indexOf(status)
 											? 'bg-accent text-white'
 											: 'bg-border text-muted'
 									}">
-										{#if ['received', 'diagnosing', 'repairing', 'quality_testing', 'ready_for_pickup', 'completed'].indexOf(repairData.status) >= 
-											['received', 'diagnosing', 'repairing', 'quality_testing', 'ready_for_pickup', 'completed'].indexOf(status)}
+										{#if ['Received', 'Diagnosing', 'Repairing', 'Quality Testing', 'Ready For Pickup', 'Completed'].indexOf(repairData.status) >= 
+											['Received', 'Diagnosing', 'Repairing', 'Quality Testing', 'Ready For Pickup', 'Completed'].indexOf(status)}
 											<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
 												<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
 											</svg>

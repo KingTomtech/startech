@@ -7,6 +7,7 @@
 	export let type: 'button' | 'submit' | 'reset' = 'button';
 	export let loading: boolean = false;
 	export let className: string = '';
+	export let onClick: ((event: MouseEvent) => void) | undefined = undefined;
 
 	const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
@@ -28,6 +29,7 @@
 	type={type}
 	class={cn(baseStyles, variants[variant], sizes[size], className)}
 	disabled={disabled || loading}
+	on:click={onClick}
 >
 	{#if loading}
 		<svg class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">

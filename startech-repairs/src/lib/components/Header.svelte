@@ -6,7 +6,6 @@
 	const navLinks = [
 		{ href: '/services', label: 'Services' },
 		{ href: '/pricing', label: 'Pricing' },
-		{ href: '/about', label: 'About' },
 		{ href: '/faq', label: 'FAQ' },
 		{ href: '/contact', label: 'Contact' }
 	];
@@ -36,6 +35,9 @@
 			<div class="hidden md:flex items-center gap-4">
 				<a href="/track-repair" class="text-primary hover:text-accent transition-colors font-medium">
 					Track Repair
+				</a>
+				<a href="/login" class="text-primary hover:text-accent transition-colors font-medium">
+					Login
 				</a>
 				<a 
 					href="/book-repair" 
@@ -79,6 +81,13 @@
 						on:click={() => isMenuOpen = false}
 					>
 						Track Repair
+					</a>
+					<a 
+						href="/login" 
+						class="block text-center text-primary hover:text-accent transition-colors font-medium"
+						on:click={() => isMenuOpen = false}
+					>
+						Login
 					</a>
 					<a 
 						href="/book-repair" 

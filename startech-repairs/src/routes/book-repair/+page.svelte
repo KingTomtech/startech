@@ -14,7 +14,7 @@
 	let bookingId = '';
 
 	// Form data
-	let formData: Partial<BookingFormData> = {
+	let formData: BookingFormData = {
 		deviceBrand: '',
 		deviceModel: '',
 		issueType: '',
@@ -32,6 +32,23 @@
 	let errors: Record<string, string> = {};
 
 	// Options
+	const issueMap: Record<string, string> = {
+		'screen-replacement': 'Screen Replacement',
+		'battery-replacement': 'Battery Replacement',
+		'charging-port': 'Charging Port',
+		'camera-repair': 'Camera',
+		'speaker-repair': 'Speaker',
+		'water-damage': 'Water Damage',
+		'software-issue': 'Software Issue',
+		other: 'Other'
+	};
+
+	const pickupMap: Record<BookingFormData['pickupOption'], string> = {
+		walkin: 'Walk-in',
+		pickup: 'Pickup',
+		delivery: 'Delivery'
+	};
+
 	const brands = [
 		{ value: 'apple', label: 'Apple' },
 		{ value: 'samsung', label: 'Samsung' },
@@ -197,21 +214,34 @@
 
 		try {
 			bookingId = generateBookingId();
+			const customer = await ensureCustomerAccount();
+			const deviceLabel = `${getOptionLabel(brands, formData.deviceBrand)} ${getOptionLabel(getModels(), formData.deviceModel)}`.trim();
+			const issueLabel = issueMap[formData.issueType] || 'Other';
 
 			const bookingData = {
-				...formData,
-				booking_id: bookingId,
-				status: 'received',
-				created: new Date().toISOString()
+				customer: customer.id,
+				device: deviceLabel,
+				issue: issueLabel,
+				preferred_date: formData.preferredDate || null,
+				pickup_option: pickupMap[formData.pickupOption],
+				status: 'Pending',
+				notes: formData.notes || '',
 			};
 
-			// Save to PocketBase
 			await pb.collection('bookings').create(bookingData);
-
-			// Also create a repair record
 			await pb.collection('repairs').create({
-				...bookingData,
-				customer: pb.authStore.record?.id || null
+				customer: customer.id,
+				issue_type: issueLabel,
+				description: formData.description,
+				status: 'Received',
+				warranty_months: 3,
+				booking_id: bookingId,
+				notes: [
+					`Device: ${deviceLabel}`,
+					`Pickup option: ${pickupMap[formData.pickupOption]}`,
+					formData.preferredDate ? `Preferred date: ${formData.preferredDate}` : '',
+					formData.notes ? `Customer notes: ${formData.notes}` : ''
+				].filter(Boolean).join('\n')
 			});
 
 			addNotification('success', 'Booking submitted successfully!');
@@ -224,11 +254,47 @@
 		}
 	}
 
-	function updateField(field: keyof BookingFormData, value: any) {
-		formData[field] = value;
-		if (errors[field]) {
-			errors[field] = '';
+	async function ensureCustomerAccount() {
+		const email = formData.email.trim().toLowerCase();
+		const storageKey = `startech-customer-password:${email}`;
+		let password = localStorage.getItem(storageKey) || createTemporaryPassword();
+
+		try {
+			const record = await pb.collection('customers').create({
+				email,
+				emailVisibility: true,
+				password,
+				passwordConfirm: password,
+				name: `${formData.firstName} ${formData.lastName}`.trim(),
+				phone: formData.phone,
+				role: 'customer'
+			});
+			localStorage.setItem(storageKey, password);
+			await pb.collection('customers').authWithPassword(email, password);
+			return record;
+		} catch (err: any) {
+			if (err?.status !== 400 || !localStorage.getItem(storageKey)) {
+				throw new Error(err?.status === 400 ? 'An account already exists for this email. Please use a different email for now.' : err.message);
+			}
+
+			const auth = await pb.collection('customers').authWithPassword(email, password);
+			return auth.record;
 		}
+	}
+
+	function createTemporaryPassword() {
+		const bytes = crypto.getRandomValues(new Uint8Array(12));
+		return `St-${Array.from(bytes, (byte) => byte.toString(36)).join('')}`;
+	}
+
+	function getOptionLabel(options: Array<{ value: string; label: string }>, value: string) {
+		return options.find((option) => option.value === value)?.label || value;
+	}
+
+	function handleBrandChange() {
+		formData.deviceModel = '';
+		errors.deviceBrand = '';
+		errors.deviceModel = '';
 	}
 </script>
 
@@ -296,15 +362,16 @@
 						<Select
 							label="Device Brand"
 							options={brands}
-							value={formData.deviceBrand || ''}
+							bind:value={formData.deviceBrand}
 							error={errors.deviceBrand}
 							placeholder="Choose a brand"
+							onChange={handleBrandChange}
 						/>
 						
 						<Select
 							label="Device Model"
 							options={getModels()}
-							value={formData.deviceModel || ''}
+							bind:value={formData.deviceModel}
 							error={errors.deviceModel}
 							placeholder="Choose your model"
 							disabled={!formData.deviceBrand}
@@ -320,7 +387,7 @@
 						<Select
 							label="What's the problem?"
 							options={issues}
-							value={formData.issueType || ''}
+							bind:value={formData.issueType}
 							error={errors.issueType}
 							placeholder="Select the issue"
 						/>
@@ -328,7 +395,7 @@
 						<Textarea
 							label="Describe the issue in detail"
 							placeholder="When did the problem start? Any specific symptoms?"
-							value={formData.description || ''}
+							bind:value={formData.description}
 							error={errors.description}
 							rows={4}
 						/>
@@ -345,14 +412,14 @@
 								label="First Name"
 								type="text"
 								placeholder="John"
-								value={formData.firstName || ''}
+								bind:value={formData.firstName}
 								error={errors.firstName}
 							/>
 							<Input
 								label="Last Name"
 								type="text"
 								placeholder="Doe"
-								value={formData.lastName || ''}
+								bind:value={formData.lastName}
 								error={errors.lastName}
 							/>
 						</div>
@@ -361,7 +428,7 @@
 							label="Email Address"
 							type="email"
 							placeholder="john@example.com"
-							value={formData.email || ''}
+							bind:value={formData.email}
 							error={errors.email}
 						/>
 						
@@ -369,27 +436,27 @@
 							label="Phone Number"
 							type="tel"
 							placeholder="04XX XXX XXX"
-							value={formData.phone || ''}
+							bind:value={formData.phone}
 							error={errors.phone}
 						/>
 						
 						<Select
 							label="How would you like to proceed?"
 							options={pickupOptions}
-							value={formData.pickupOption || 'walkin'}
+							bind:value={formData.pickupOption}
 							placeholder="Select an option"
 						/>
 						
 						<Input
 							label="Preferred Date (Optional)"
 							type="date"
-							value={formData.preferredDate || ''}
+							bind:value={formData.preferredDate}
 						/>
 						
 						<Textarea
 							label="Additional Notes (Optional)"
 							placeholder="Any other information we should know?"
-							value={formData.notes || ''}
+							bind:value={formData.notes}
 							rows={3}
 						/>
 					</div>

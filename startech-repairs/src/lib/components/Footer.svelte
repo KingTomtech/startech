@@ -5,8 +5,8 @@
 		{
 			icon: Phone,
 			label: 'Phone',
-			value: '(08) 9456 7890',
-			href: 'tel:+61894567890'
+			value: '+61 420 994 662',
+			href: 'tel:+61420994662'
 		},
 		{
 			icon: Mail,
@@ -17,13 +17,13 @@
 		{
 			icon: MapPin,
 			label: 'Location',
-			value: '33 Crimson Blvd, Forrestfield WA 6058',
-			href: 'https://maps.google.com/?q=33+Crimson+Blvd,+Forrestfield+WA+6058'
+			value: '33 Crimson Bvd, Forrestfield WA 6058',
+			href: 'https://maps.google.com/?q=33+Crimson+Bvd,+Forrestfield+WA+6058'
 		},
 		{
 			icon: Clock,
 			label: 'Hours',
-			value: 'Mon-Fri: 9AM-6PM, Sat: 10AM-4PM',
+			value: 'Mon: Closed, Tue-Fri: 7AM-7PM, Sat: 7AM-5PM',
 			href: undefined
 		}
 	];
@@ -36,7 +36,7 @@
 			<div class="space-y-4">
 				<h3 class="text-2xl font-bold">Star Tech</h3>
 				<p class="text-muted text-sm">
-					Perth's Premier Tech Repair Service. Fast, reliable, and affordable repairs with premium quality parts.
+					Perth's premier tech repair specialists. Fast repairs, quality parts, and affordable prices.
 				</p>
 				<div class="flex items-center gap-1">
 					{#each [1, 2, 3, 4, 5] as i}

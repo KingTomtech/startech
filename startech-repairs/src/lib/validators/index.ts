@@ -8,7 +8,7 @@ export const bookingSchema = z.object({
 	firstName: z.string().min(1, 'First name is required'),
 	lastName: z.string().min(1, 'Last name is required'),
 	email: z.string().email('Invalid email address'),
-	phone: z.string().min(10, 'Valid phone number is required'),
+	phone: z.string().regex(/^[\d\s()+-]{8,}$/, 'Valid phone number is required'),
 	pickupOption: z.enum(['walkin', 'pickup', 'delivery']),
 	preferredDate: z.string().optional(),
 	notes: z.string().optional()
@@ -30,7 +30,7 @@ export const registerSchema = z.object({
 });
 
 export const trackRepairSchema = z.object({
-	bookingId: z.string().min(1, 'Booking ID is required').or(z.string().length(10))
+	bookingId: z.string().trim().min(5, 'Enter your booking ID')
 });
 
 export type BookingFormData = z.infer<typeof bookingSchema>;
