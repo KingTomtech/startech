@@ -145,7 +145,10 @@
 				<h1 class="text-4xl font-bold text-primary">Technician dashboard</h1>
 				<p class="mt-2 text-muted">Update repairs, notify customers, manage prices, and add supported devices.</p>
 			</div>
-			<Button variant="outline" onClick={signOut}>Logout</Button>
+			<div class="flex flex-wrap gap-3">
+				<a class="inline-flex items-center justify-center rounded-lg border-2 border-primary px-4 py-2 font-medium text-primary transition-colors hover:bg-primary hover:text-white" href="/technician/settings">Settings</a>
+				<Button variant="outline" onClick={signOut}>Logout</Button>
+			</div>
 		</div>
 
 		<div class="mt-8 flex flex-wrap gap-3">

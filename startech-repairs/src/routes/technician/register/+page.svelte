@@ -7,6 +7,7 @@
 
 	let name = '';
 	let email = '';
+	let phone = '';
 	let password = '';
 	let loading = false;
 	let error = '';
@@ -14,7 +15,7 @@
 	async function submit() {
 		loading = true;
 		error = '';
-		const result = await registerTechnician(email, password, name);
+		const result = await registerTechnician(email, password, name, phone);
 		loading = false;
 
 		if (!result.success) {
@@ -39,6 +40,7 @@
 		<form class="mt-8 space-y-5 rounded-lg border border-border bg-white p-6" on:submit|preventDefault={submit}>
 			<Input label="Name" bind:value={name} />
 			<Input label="Email" type="email" bind:value={email} error={error} />
+			<Input label="Phone" type="tel" bind:value={phone} />
 			<Input label="Password" type="password" bind:value={password} />
 			<Button type="submit" className="w-full" {loading}>Create technician profile</Button>
 		</form>

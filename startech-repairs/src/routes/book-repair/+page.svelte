@@ -12,6 +12,7 @@
 	let step = 1;
 	let loading = false;
 	let bookingId = '';
+	let repairPhotos: File[] = [];
 
 	// Form data
 	let formData: BookingFormData = {
@@ -229,20 +230,21 @@
 			};
 
 			await pb.collection('bookings').create(bookingData);
-			await pb.collection('repairs').create({
-				customer: customer.id,
-				issue_type: issueLabel,
-				description: formData.description,
-				status: 'Received',
-				warranty_months: 3,
-				booking_id: bookingId,
-				notes: [
-					`Device: ${deviceLabel}`,
-					`Pickup option: ${pickupMap[formData.pickupOption]}`,
-					formData.preferredDate ? `Preferred date: ${formData.preferredDate}` : '',
-					formData.notes ? `Customer notes: ${formData.notes}` : ''
-				].filter(Boolean).join('\n')
-			});
+			const repairData = new FormData();
+			repairData.append('customer', customer.id);
+			repairData.append('issue_type', issueLabel);
+			repairData.append('description', formData.description);
+			repairData.append('status', 'Received');
+			repairData.append('warranty_months', '3');
+			repairData.append('booking_id', bookingId);
+			repairData.append('notes', [
+				`Device: ${deviceLabel}`,
+				`Pickup option: ${pickupMap[formData.pickupOption]}`,
+				formData.preferredDate ? `Preferred date: ${formData.preferredDate}` : '',
+				formData.notes ? `Customer notes: ${formData.notes}` : ''
+			].filter(Boolean).join('\n'));
+			repairPhotos.forEach((file) => repairData.append('photos', file));
+			await pb.collection('repairs').create(repairData);
 
 			addNotification('success', 'Booking submitted successfully!');
 			step = 4;
@@ -295,6 +297,10 @@
 		formData.deviceModel = '';
 		errors.deviceBrand = '';
 		errors.deviceModel = '';
+	}
+
+	function handleRepairPhotos(event: Event) {
+		repairPhotos = Array.from((event.target as HTMLInputElement).files || []).slice(0, 10);
 	}
 </script>
 
@@ -399,6 +405,14 @@
 							error={errors.description}
 							rows={4}
 						/>
+
+						<div class="space-y-1">
+							<label class="block text-sm font-medium text-primary" for="repair-photos">Photos of the issue (optional)</label>
+							<input id="repair-photos" class="w-full rounded-lg border border-border px-4 py-2 text-sm text-muted" type="file" accept="image/png,image/jpeg,image/webp" multiple on:change={handleRepairPhotos} />
+							{#if repairPhotos.length}
+								<p class="text-sm text-muted">{repairPhotos.length} file{repairPhotos.length === 1 ? '' : 's'} selected</p>
+							{/if}
+						</div>
 					</div>
 				{/if}
 
