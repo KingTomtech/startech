@@ -1,0 +1,28 @@
+{
+  "name": "startech-repairs",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-cloudflare": "^4.0.0",
+    "@sveltejs/kit": "^2.0.0",
+    "@sveltejs/vite-plugin-svelte": "^3.0.0",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "svelte": "^5.0.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.10"
+  },
+  "dependencies": {
+    "@tanstack/svelte-query": "^5.17.0",
+    "lucide-svelte": "^0.468.0",
+    "pocketbase": "^0.21.0",
+    "zod": "^3.22.4"
+  },
+  "type": "module"
+}
