@@ -83,8 +83,8 @@
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32 relative">
 		<div class="text-center space-y-8">
 			<h1 class="text-5xl md:text-7xl font-bold leading-tight">
-				Perth's Premier
-				<span class="block text-accent">Tech Repair Service</span>
+				Perth's most trusted
+				<span class="block text-accent">Tech Repair Specialists</span>
 			</h1>
 			<p class="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto">
 				Fast, reliable, and affordable repairs with premium quality parts. 
