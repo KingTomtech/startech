@@ -73,7 +73,7 @@
 </script>
 
 <svelte:head>
-	<title>Star Tech Phone Repairs | Perth's Premier Tech Repair Service</title>
+	<title>Star Tech Phone Repairs | Perth's most trusted tech repair specialists</title>
 	<meta name="description" content="Fast, reliable phone repairs in Perth. Same-day service, premium parts, 90-day warranty. Get a free quote today!" />
 </svelte:head>
 
