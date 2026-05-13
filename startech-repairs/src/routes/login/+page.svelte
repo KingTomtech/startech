@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
+	import { pb } from '$lib/pocketbase';
 
 	export let form: { error?: string; email?: string } | undefined;
 </script>
@@ -15,7 +16,14 @@
 	<div class="mx-auto max-w-md px-4">
 		<h1 class="text-4xl font-bold text-primary">Login</h1>
 		<p class="mt-3 text-muted">Sign in to view repairs, invoices, messages, and account details.</p>
-		<form method="POST" use:enhance class="mt-8 space-y-5 rounded-lg border border-border bg-white p-6">
+		<form method="POST" use:enhance={() => {
+			return async ({ result, update }) => {
+				if (result.type === 'redirect') {
+					pb.authStore.loadFromCookie(document.cookie);
+				}
+				update();
+			};
+		}} class="mt-8 space-y-5 rounded-lg border border-border bg-white p-6">
 			<Input name="email" label="Email" type="email" value={form?.email || ''} error={form?.error} />
 			<Input name="password" label="Password" type="password" />
 			<Button type="submit" className="w-full">Login</Button>

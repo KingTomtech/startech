@@ -76,7 +76,7 @@
 		]);
 
 		unsubscribeRealtime = subscriptions
-			.filter((result): result is PromiseFulfilledResult<() => void> => result.status === 'fulfilled')
+			.filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
 			.map((result) => result.value);
 	}
 

@@ -9,6 +9,7 @@
 	export let placeholder: string = 'Select an option';
 	export let value: string = '';
 	export let disabled: boolean = false;
+	export let required: boolean = false;
 	export let className: string = '';
 	export let onChange: ((event: Event) => void) | undefined = undefined;
 </script>
@@ -23,6 +24,7 @@
 		{id}
 		{name}
 		disabled={disabled}
+		required={required}
 		bind:value
 		on:change={onChange}
 		aria-invalid={error ? 'true' : 'false'}

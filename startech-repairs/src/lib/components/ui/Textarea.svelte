@@ -8,6 +8,7 @@
 	export let placeholder: string = '';
 	export let value: string = '';
 	export let disabled: boolean = false;
+	export let required: boolean = false;
 	export let rows: number = 4;
 	export let className: string = '';
 </script>
@@ -24,6 +25,7 @@
 		{placeholder}
 		{rows}
 		disabled={disabled}
+		required={required}
 		bind:value
 		aria-invalid={error ? 'true' : 'false'}
 		aria-describedby={error ? `${id}-error` : undefined}

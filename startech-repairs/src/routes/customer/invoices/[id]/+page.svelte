@@ -17,7 +17,7 @@
 		}
 
 		try {
-			invoice = await pb.collection('invoices').getOne($page.params.id, { expand: 'repair,customer' });
+			invoice = await pb.collection('invoices').getOne(String($page.params.id), { expand: 'repair,customer' });
 		} catch (err: any) {
 			error = err.message || 'Invoice not found';
 		} finally {

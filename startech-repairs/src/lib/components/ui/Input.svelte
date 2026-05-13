@@ -9,6 +9,7 @@
 	export let placeholder: string = '';
 	export let value: string = '';
 	export let disabled: boolean = false;
+	export let required: boolean = false;
 	export let className: string = '';
 </script>
 
@@ -24,6 +25,7 @@
 		type={type}
 		{placeholder}
 		disabled={disabled}
+		required={required}
 		bind:value
 		aria-invalid={error ? 'true' : 'false'}
 		aria-describedby={error ? `${id}-error` : undefined}

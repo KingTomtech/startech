@@ -58,7 +58,7 @@
 		]);
 
 		unsubscribeRealtime = subscriptions
-			.filter((result): result is PromiseFulfilledResult<() => void> => result.status === 'fulfilled')
+			.filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
 			.map((result) => result.value);
 	}
 
@@ -80,6 +80,7 @@
 				<p class="mt-2 text-muted">Tracking IDs, repair records, messages, bookings, and invoices saved to your account.</p>
 			</div>
 			<div class="flex flex-wrap gap-3">
+				<a class="inline-flex items-center justify-center rounded-lg border-2 border-primary px-4 py-2 font-medium text-primary transition-colors hover:bg-primary hover:text-white" href="/customer/repairs">Repairs</a>
 				<a class="inline-flex items-center justify-center rounded-lg border-2 border-primary px-4 py-2 font-medium text-primary transition-colors hover:bg-primary hover:text-white" href="/customer/settings">Settings</a>
 				<Button variant="outline" onClick={signOut}>Logout</Button>
 			</div>
@@ -90,11 +91,12 @@
 		{:else}
 			<div class="mt-10 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
 				<section class="rounded-lg border border-border bg-white">
-					<div class="border-b border-border p-5">
+					<div class="flex items-center justify-between border-b border-border p-5">
 						<h2 class="text-xl font-semibold text-primary">Repair history</h2>
+						<a class="text-sm font-semibold text-accent hover:underline" href="/customer/repairs">View all</a>
 					</div>
 					<div class="divide-y divide-border">
-						{#each repairs as repair}
+						{#each repairs.slice(0, 3) as repair}
 							<article class="p-5">
 								<div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
 									<div>
@@ -103,9 +105,6 @@
 									</div>
 									<span class="rounded-full bg-accent/10 px-3 py-1 text-sm font-semibold text-accent">{repair.status}</span>
 								</div>
-								{#if repair.notes}
-									<p class="mt-3 whitespace-pre-line text-sm text-muted">{repair.notes}</p>
-								{/if}
 								<a class="mt-3 inline-block text-sm font-medium text-accent hover:underline" href={`/track-repair?booking=${repair.booking_id}`}>Track this repair</a>
 							</article>
 						{:else}
