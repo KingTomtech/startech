@@ -22,7 +22,7 @@
   "dependencies": {
     "@tanstack/svelte-query": "^5.17.0",
     "lucide-svelte": "^0.468.0",
-    "pocketbase": "^0.21.0",
+    "pocketbase": "^0.26.9",
     "zod": "^3.22.4"
   },
   "type": "module"
