@@ -2,6 +2,7 @@
 	import { cn } from '$lib/utils';
 
 	export let id: string = `input-${Math.random().toString(36).slice(2)}`;
+	export let name: string = id;
 	export let label: string = '';
 	export let error: string | undefined = undefined;
 	export let type: 'text' | 'email' | 'password' | 'tel' | 'date' = 'text';
@@ -19,6 +20,7 @@
 	{/if}
 	<input
 		{id}
+		{name}
 		type={type}
 		{placeholder}
 		disabled={disabled}

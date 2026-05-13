@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import { logout } from '$lib/hooks/auth';
 	import { pb } from '$lib/pocketbase';
@@ -11,6 +11,7 @@
 	let invoices: any[] = [];
 	let messages: any[] = [];
 	let loading = true;
+	let unsubscribeRealtime: Array<() => void> = [];
 
 	onMount(async () => {
 		if (!pb.authStore.isValid || pb.authStore.record?.collectionName !== 'customers') {
@@ -19,10 +20,15 @@
 		}
 
 		await loadData();
+		await subscribeToUpdates();
 	});
 
-	async function loadData() {
-		loading = true;
+	onDestroy(() => {
+		unsubscribeRealtime.forEach((unsubscribe) => unsubscribe());
+	});
+
+	async function loadData(showSpinner = true) {
+		if (showSpinner) loading = true;
 		const customerId = pb.authStore.record?.id;
 		const filter = pb.filter('customer = {:customer}', { customer: customerId });
 		[repairs, bookings, invoices, messages] = await Promise.all([
@@ -32,6 +38,28 @@
 			pb.collection('repair_messages').getFullList({ filter, sort: '-created' }).catch(() => [])
 		]);
 		loading = false;
+	}
+
+	async function subscribeToUpdates() {
+		const customerId = pb.authStore.record?.id;
+		if (!customerId) return;
+
+		const refreshIfMine = async (event: any) => {
+			if (event.record?.customer === customerId) {
+				await loadData(false);
+			}
+		};
+
+		const subscriptions = await Promise.allSettled([
+			pb.collection('repairs').subscribe('*', refreshIfMine),
+			pb.collection('bookings').subscribe('*', refreshIfMine),
+			pb.collection('invoices').subscribe('*', refreshIfMine),
+			pb.collection('repair_messages').subscribe('*', refreshIfMine)
+		]);
+
+		unsubscribeRealtime = subscriptions
+			.filter((result): result is PromiseFulfilledResult<() => void> => result.status === 'fulfilled')
+			.map((result) => result.value);
 	}
 
 	async function signOut() {
@@ -102,7 +130,10 @@
 					</section>
 
 					<section class="rounded-lg border border-border bg-white p-5">
-						<h2 class="text-xl font-semibold text-primary">Invoices</h2>
+						<div class="flex items-center justify-between gap-3">
+							<h2 class="text-xl font-semibold text-primary">Invoices</h2>
+							<a class="text-sm font-semibold text-accent hover:underline" href="/customer/invoices">View all</a>
+						</div>
 						<div class="mt-4 space-y-3">
 							{#each invoices as invoice}
 								<div class="rounded-lg bg-light p-3 text-sm">

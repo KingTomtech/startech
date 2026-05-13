@@ -2,6 +2,7 @@
 	import { cn } from '$lib/utils';
 
 	export let id: string = `select-${Math.random().toString(36).slice(2)}`;
+	export let name: string = id;
 	export let options: Array<{ value: string; label: string }> = [];
 	export let label: string = '';
 	export let error: string | undefined = undefined;
@@ -20,6 +21,7 @@
 	{/if}
 	<select
 		{id}
+		{name}
 		disabled={disabled}
 		bind:value
 		on:change={onChange}

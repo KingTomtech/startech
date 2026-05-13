@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
 	import Select from '$lib/components/ui/Select.svelte';
@@ -35,6 +35,7 @@
 	let deviceModel = '';
 	let deviceVariant = '';
 	let deviceYear = '';
+	let unsubscribeRealtime: Array<() => void> = [];
 
 	onMount(async () => {
 		if (!pb.authStore.isValid || pb.authStore.record?.collectionName !== 'technicians') {
@@ -47,10 +48,15 @@
 		}
 
 		await loadData();
+		await subscribeToUpdates();
 	});
 
-	async function loadData() {
-		loading = true;
+	onDestroy(() => {
+		unsubscribeRealtime.forEach((unsubscribe) => unsubscribe());
+	});
+
+	async function loadData(showSpinner = true) {
+		if (showSpinner) loading = true;
 		[repairs, inventory, devices, invoices] = await Promise.all([
 			pb.collection('repairs').getFullList({ sort: '-created', expand: 'customer,technician,device' }),
 			pb.collection('inventory_parts').getFullList({ sort: 'name' }),
@@ -58,6 +64,20 @@
 			pb.collection('invoices').getFullList({ sort: '-created', expand: 'customer,repair' })
 		]);
 		loading = false;
+	}
+
+	async function subscribeToUpdates() {
+		const refresh = () => loadData(false);
+		const subscriptions = await Promise.allSettled([
+			pb.collection('repairs').subscribe('*', refresh),
+			pb.collection('invoices').subscribe('*', refresh),
+			pb.collection('inventory_parts').subscribe('*', refresh),
+			pb.collection('devices').subscribe('*', refresh)
+		]);
+
+		unsubscribeRealtime = subscriptions
+			.filter((result): result is PromiseFulfilledResult<() => void> => result.status === 'fulfilled')
+			.map((result) => result.value);
 	}
 
 	async function updateRepair() {
